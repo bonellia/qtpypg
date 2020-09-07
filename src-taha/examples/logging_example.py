@@ -1,43 +1,43 @@
 import sys
-from PyQt5 import QtCore, QtGui
+from PyQt5 import QtWidgets
 import logging
 
 # Uncomment below for terminal log messages
-# logging.basicConfig(level=logging.DEBUG, format=' %(asctime)s - %(name)s - %(levelname)s - %(message)s')    
+# logging.basicConfig(level=logging.DEBUG, format=' %(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-class QPlainTextEditLogger(logging.Handler):
+class QTextEditLogger(logging.Handler):
     def __init__(self, parent):
         super().__init__()
-        self.widget = QtGui.QPlainTextEdit(parent)
-        self.widget.setReadOnly(True)    
+        self.widget = QtWidgets.QPlainTextEdit(parent)
+        self.widget.setReadOnly(True)
 
     def emit(self, record):
         msg = self.format(record)
-        self.widget.appendPlainText(msg)    
+        self.widget.appendPlainText(msg)
 
 
-class MyDialog(QtGui.QDialo, QPlainTextEditLogger):
+class MyDialog(QtWidgets.QDialog, QtWidgets.QPlainTextEdit):
     def __init__(self, parent=None):
-        super().__init__(parent)    
+        super().__init__(parent)
 
-        logTextBox = QPlainTextEditLogger(self)
+        logTextBox = QTextEditLogger(self)
         # You can format what is printed to text box
         logTextBox.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
         logging.getLogger().addHandler(logTextBox)
         # You can control the logging level
         logging.getLogger().setLevel(logging.DEBUG)
 
-        self._button = QtGui.QPushButton(self)
-        self._button.setText('Test Me')    
+        self._button = QtWidgets.QPushButton(self)
+        self._button.setText('Test Me')
 
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         # Add the new logging box widget to the layout
         layout.addWidget(logTextBox.widget)
         layout.addWidget(self._button)
-        self.setLayout(layout)    
+        self.setLayout(layout)
 
         # Connect signal to slot
-        self._button.clicked.connect(self.test)    
+        self._button.clicked.connect(self.test)
 
     def test(self):
         logging.debug('damn, a bug')
@@ -45,12 +45,8 @@ class MyDialog(QtGui.QDialo, QPlainTextEditLogger):
         logging.warning('that\'s not right')
         logging.error('foobar')
 
-if (__name__ == '__main__'):
-    app = None
-    if (not QtGui.QApplication.instance()):
-        app = QtGui.QApplication([])
-    dlg = MyDialog()
-    dlg.show()
-    dlg.raise_()
-    if (app):
-        app.exec_()
+app = QtWidgets.QApplication(sys.argv)
+dlg = MyDialog()
+dlg.show()
+dlg.raise_()
+sys.exit(app.exec_())
