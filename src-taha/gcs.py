@@ -24,6 +24,18 @@ class MapView(QtWidgets.QGraphicsView):
             print square
             self.scene.addRect(square, self.pen, self.brush)
             self.window.logPane.appendPlainText('Added point to ({}, {})'.format(self.lastPoint.x(), self.lastPoint.y()))
+
+    def createPoly(self, n, r, s):
+        polygon = QtGui.QPolygonF() 
+        w = 360/n                                                       # angle per step
+        for i in range(n):                                              # add the points of polygon
+            t = w*i + s
+            x = r*math.cos(math.radians(t))
+            y = r*math.sin(math.radians(t))
+            polygon.append(QtCore.QPointF(self.width()/2 +x, self.height()/2 + y))  
+
+        return polygon
+    
 class GroundControlStation(QtWidgets.QMainWindow):
     savePoints = False
     points = []
