@@ -1,0 +1,1 @@
+These snippets are added as a reference for various functionalities.
