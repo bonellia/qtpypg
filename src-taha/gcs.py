@@ -6,14 +6,24 @@ class MapView(QtWidgets.QGraphicsView):
 
     def __init__(self, parent, window):
         self.window = window
+        self.scene = QtWidgets.QGraphicsScene()
+        self.scene.setSceneRect(10, 10, 800, 800)
         QtWidgets.QGraphicsView.__init__(self, parent)
+        self.setGeometry(QRect(10, 10, 810, 810))
+        self.setObjectName("mapView")
+        self.setScene(self.scene)
+        self.pen = QtGui.QPen(Qt.green)
+        self.brush = QtGui.QBrush(Qt.green)
         self.setMouseTracking(True)
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.LeftButton and self.window.savePoints:
             self.lastPoint = event.pos()
+            self.window.points.append(self.lastPoint)
+            square = QRectF(self.lastPoint.x()-10, self.lastPoint.y()-10, 20, 20)
+            print square
+            self.scene.addRect(square, self.pen, self.brush)
             self.window.logPane.appendPlainText('Added point to ({}, {})'.format(self.lastPoint.x(), self.lastPoint.y()))
-    
 class GroundControlStation(QtWidgets.QMainWindow):
     savePoints = False
     points = []
@@ -28,14 +38,13 @@ class GroundControlStation(QtWidgets.QMainWindow):
         self.centralwidget.setObjectName("centralwidget")
         # Map view where polygons are created and displayed.
         self.mapView = MapView(self.centralwidget, self)
-        self.mapView.setGeometry(QRect(10, 10, 800, 800))
-        self.mapView.setObjectName("graphicsView")
         self.mapView.installEventFilter(self)
         self.setMouseTracking(True)
         # Resets both the polygon on the map and the points saved.
         self.clearDrawingButton = QtWidgets.QPushButton(self.centralwidget)
         self.clearDrawingButton.setGeometry(QRect(830, 70, 200, 50))
         self.clearDrawingButton.setObjectName("clearDrawingButton")
+        self.clearDrawingButton.clicked.connect(self.mapView.scene.clear)
         # Currently only drawing convex polygons. The button toggles point saving.
         self.toggleConvexDrawingButton = QtWidgets.QPushButton(self.centralwidget)
         self.toggleConvexDrawingButton.setGeometry(QRect(830, 10, 200, 50))
@@ -115,8 +124,7 @@ class GroundControlStation(QtWidgets.QMainWindow):
             self.close()
     
     def eventFilter(self, source, event):
-        if (source is self.mapView and
-            event.type() == QEvent.KeyPress):
+        if (source is self.mapView and event.type() == QEvent.KeyPress):
             # Pass the event to overwritten method on MapView class.
             self.keyPressEvent(event)
         return QtWidgets.QMainWindow.eventFilter(self, source, event)
