@@ -1,5 +1,6 @@
 from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtCore import *
+import itertools
 import sys
 
 class MapView(QtWidgets.QGraphicsView):
@@ -20,21 +21,28 @@ class MapView(QtWidgets.QGraphicsView):
         if event.button() == Qt.LeftButton and self.window.savePoints:
             self.lastPoint = event.pos()
             self.window.points.append(self.lastPoint)
-            square = QRectF(self.lastPoint.x()-10, self.lastPoint.y()-10, 20, 20)
+            square = QRectF(self.lastPoint.x()-2, self.lastPoint.y()-2, 4, 4)
             print square
             self.scene.addRect(square, self.pen, self.brush)
             self.window.logPane.appendPlainText('Added point to ({}, {})'.format(self.lastPoint.x(), self.lastPoint.y()))
+    
+    def drawLoadedPoints(self, points):
+        """
+        A placeholder for further import/export implementation if desired.
+        """
+        for point in poits:
+            square = QRectF(self.point.x()-2, self.point.y()-2, 4, 4)
+            self.scene.addRect(square, self.pen, self.brush)
 
-    def createPoly(self, n, r, s):
-        polygon = QtGui.QPolygonF() 
-        w = 360/n                                                       # angle per step
-        for i in range(n):                                              # add the points of polygon
-            t = w*i + s
-            x = r*math.cos(math.radians(t))
-            y = r*math.sin(math.radians(t))
-            polygon.append(QtCore.QPointF(self.width()/2 +x, self.height()/2 + y))  
-
-        return polygon
+    def createPoly(self, points):
+        chosenPoint = points[0]
+        
+        for pointTuple in list(itertools.combinations(points[1:], 2)):
+            triangle = QtGui.QPolygonF()
+            triangle.append(chosenPoint)
+            triangle.append(pointTuple[0])
+            triangle.append(pointTuple[1])
+            self.scene.addPolygon(triangle, self.pen, self.brush)
     
 class GroundControlStation(QtWidgets.QMainWindow):
     savePoints = False
@@ -56,7 +64,7 @@ class GroundControlStation(QtWidgets.QMainWindow):
         self.clearDrawingButton = QtWidgets.QPushButton(self.centralwidget)
         self.clearDrawingButton.setGeometry(QRect(830, 70, 200, 50))
         self.clearDrawingButton.setObjectName("clearDrawingButton")
-        self.clearDrawingButton.clicked.connect(self.mapView.scene.clear)
+        self.clearDrawingButton.clicked.connect(self.clearDrawing)
         # Currently only drawing convex polygons. The button toggles point saving.
         self.toggleConvexDrawingButton = QtWidgets.QPushButton(self.centralwidget)
         self.toggleConvexDrawingButton.setGeometry(QRect(830, 10, 200, 50))
@@ -88,7 +96,7 @@ class GroundControlStation(QtWidgets.QMainWindow):
         self.menuHelp = QtWidgets.QMenu(self.menubar)
         self.menuHelp.setObjectName("menuHelp")
         QMainWindow.setMenuBar(self.menubar)
-        # TODO: Add save/load previously generated points feature.
+        # TODO: Add save/load previously generated points feature if requested later.
         self.actionOpen_Preset = QtWidgets.QAction(QMainWindow)
         self.actionOpen_Preset.setObjectName("actionOpen_Preset")
         self.actionSave_Preset = QtWidgets.QAction(QMainWindow)
@@ -125,15 +133,15 @@ class GroundControlStation(QtWidgets.QMainWindow):
         if self.savePoints:
             self.logPane.appendPlainText("Stopped recording points.")
             self.toggleConvexDrawingButton.setText("Enable Convex Drawing")
+            self.mapView.createPoly(self.points)
         else:
-            self.logPane.appendPlainText("Started recording points.")
+            self.logPane.appendPlainText("Started recording points.\n Please add at least three points to the map.")
             self.toggleConvexDrawingButton.setText("Disable Convex Drawing")
         self.savePoints = not self.savePoints
     
     def keyPressEvent(self, event):
-        print "hmmmmm"
         if event.key() == Qt.Key_Escape:
-            self.close()
+            self.mapView.close()
     
     def eventFilter(self, source, event):
         if (source is self.mapView and event.type() == QEvent.KeyPress):
@@ -143,6 +151,11 @@ class GroundControlStation(QtWidgets.QMainWindow):
 
     def clearLogsPane(self):
         self.logPane.clear()
+    
+    def clearDrawing(self):
+        self.points = []
+        self.mapView.scene.clear()
+        self.logPane.appendPlainText("Clearing drawing and previously recorded points.")
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
