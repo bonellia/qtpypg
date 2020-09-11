@@ -13,8 +13,9 @@ class MapView(QtWidgets.QGraphicsView):
         self.setGeometry(QRect(10, 10, 810, 810))
         self.setObjectName("mapView")
         self.setScene(self.scene)
+        self.brushColor = QtGui.QColor(0, 255, 0, 50)
         self.pen = QtGui.QPen(Qt.green)
-        self.brush = QtGui.QBrush(Qt.green)
+        self.brush = QtGui.QBrush(self.brushColor)
         self.setMouseTracking(True)
 
     def mousePressEvent(self, event):
@@ -36,14 +37,12 @@ class MapView(QtWidgets.QGraphicsView):
 
     def createPoly(self, points):
         chosenPoint = points[0]
-        
-        for pointTuple in list(itertools.combinations(points[1:], 2)):
-            triangle = QtGui.QPolygonF()
-            triangle.append(chosenPoint)
-            triangle.append(pointTuple[0])
-            triangle.append(pointTuple[1])
-            self.scene.addPolygon(triangle, self.pen, self.brush)
-    
+        polygon = QtGui.QPolygonF()
+        for point in points:            
+            polygon.append(point)
+            
+        self.scene.addPolygon(polygon, self.pen, self.brush)
+
 class GroundControlStation(QtWidgets.QMainWindow):
     savePoints = False
     points = []
@@ -135,7 +134,9 @@ class GroundControlStation(QtWidgets.QMainWindow):
             self.toggleConvexDrawingButton.setText("Enable Convex Drawing")
             self.mapView.createPoly(self.points)
         else:
-            self.logPane.appendPlainText("Started recording points.\n Please add at least three points to the map.")
+            self.logPane.appendPlainText("Started recording points.")
+            self.logPane.appendPlainText("Please add at least three points to the map.")
+            self.logPane.appendPlainText("Drawing will be performed with the order points created.")
             self.toggleConvexDrawingButton.setText("Disable Convex Drawing")
         self.savePoints = not self.savePoints
     
